@@ -3,6 +3,9 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .visualization_agent import generate_visualization
 
+
+#error'
+
 def home(request):
     return HttpResponse("Maths Tutor Backend is Running. Use WebSockets at ws://localhost:8000/ws/tutor/session/")
 
