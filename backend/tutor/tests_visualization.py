@@ -47,10 +47,10 @@ class VisualizationAgentTest(TestCase):
         
         result = await generate_visualization(tool_call_args)
         
-        # Verify fallback
+        # Verify fallback - match descriptive error message from code
         self.assertEqual(result["visual_type"], "graph_function")
         self.assertIn("error", result)
-        self.assertEqual(result["error"], "Failed to generate visualization")
+        self.assertTrue(result["error"].startswith("Failed to parse visualization JSON"))
 
 if __name__ == "__main__":
     unittest.main()

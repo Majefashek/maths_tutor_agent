@@ -438,6 +438,22 @@ body::before {
   flex: 1;
 }
 
+.step-expression-container {
+  flex: 1;
+  padding: 8px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.step-expression-container::-webkit-scrollbar {
+  display: none;
+}
+
+.math-text {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
 .equation-step .step-annotation {
   font-size: 0.8rem;
   color: var(--text-secondary);

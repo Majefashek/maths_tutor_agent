@@ -8,6 +8,30 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar, Cell, ReferenceDot, Legend,
 } from 'recharts';
+import { useEffect, useRef } from 'react';
+
+// ── MathText — Renders LaTeX using KaTeX ──────────────────────────
+function MathText({ children, displayMode = false, className = "" }) {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (containerRef.current && window.katex) {
+      try {
+        window.katex.render(children, containerRef.current, {
+          throwOnError: false,
+          displayMode: displayMode,
+        });
+      } catch (err) {
+        console.error("KaTeX error:", err);
+        containerRef.current.textContent = children;
+      }
+    } else if (containerRef.current) {
+      containerRef.current.textContent = children;
+    }
+  }, [children, displayMode]);
+
+  return <span ref={containerRef} className={`math-text ${className}`} title={children} />;
+}
 
 // ── Generate data points for a math expression ────────────────────
 function evaluateExpression(expr, xMin, xMax, steps = 200) {
@@ -142,7 +166,9 @@ function EquationStepsVisual({ visual }) {
           transition={{ delay: i * 0.15, duration: 0.3 }}
         >
           <span className="step-number">{i + 1}</span>
-          <span className="step-expression">{step.expression}</span>
+          <div className="step-expression-container">
+            <MathText className="step-expression">{step.expression}</MathText>
+          </div>
           {step.annotation && (
             <span className="step-annotation">{step.annotation}</span>
           )}

@@ -17,7 +17,7 @@ SECRET_KEY = os.getenv(
 )
 DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes")
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ['127.0.0.1', '.vercel.app']
 CORS_ALLOW_ALL_ORIGINS = True  # For debugging
 
 # ── Gemini ────────────────────────────────────────────────────────────

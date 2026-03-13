@@ -234,6 +234,12 @@ class TutorConsumer(AsyncWebsocketConsumer):
                 )
                 logger.info(f"Successfully sent tool response for {call_id}")
             
+            # Optional Step 4: Keep the silent system message for extra safety if needed
+            if self.gemini:
+                notification = "[System Notification: The requested visualization is now displayed on the user's screen.]"
+                logger.info("Sending visual ready notification to Gemini")
+                await self.gemini.send_text(notification)
+            
         except Exception:
             logger.exception("Failed to generate/send visualization")
             await self._send_error("Visualization generation failed")
