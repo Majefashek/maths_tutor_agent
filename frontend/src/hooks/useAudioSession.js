@@ -21,7 +21,7 @@ const WS_URL = `ws://${window.location.hostname || 'localhost'}:9000/ws/tutor/se
  *   sendText: (text: string) => void,
  * }}
  */
-export function useAudioSession() {
+export function useAudioSession({ persistSession = false } = {}) {
   const [isConnected, setIsConnected] = useState(false);
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -77,12 +77,17 @@ export function useAudioSession() {
           if (last && last.role === msg.role) {
             return [
               ...prev.slice(0, -1),
-              { ...last, text: last.text + msg.data },
+              { ...last, text: last.text + msg.data, isStreaming: true },
             ];
           }
           return [
             ...prev,
-            { role: msg.role, text: msg.data, id: msgIdRef.current++ },
+            {
+              role: msg.role,
+              text: msg.data,
+              id: msgIdRef.current++,
+              isStreaming: msg.role === 'tutor',
+            },
           ];
         });
         break;
@@ -90,6 +95,18 @@ export function useAudioSession() {
       case 'turn_complete':
         console.log('[AudioSession] Turn complete - tutor finished speaking');
         setIsTutorSpeaking(false);
+        // Mark the last tutor message as no longer streaming
+        setTranscript((prev) => {
+          if (prev.length === 0) return prev;
+          const last = prev[prev.length - 1];
+          if (last.role === 'tutor' && last.isStreaming) {
+            return [
+              ...prev.slice(0, -1),
+              { ...last, isStreaming: false },
+            ];
+          }
+          return prev;
+        });
         break;
 
       case 'VISUAL_GENERATING':
@@ -116,6 +133,9 @@ export function useAudioSession() {
     handleServerMessageRef.current = handleServerMessage;
   }, [handleServerMessage]);
 
+  // ── Ref to always hold the latest endSession ─────────────────────
+  const endSessionRef = useRef(null);
+
   // ── Worker message handler ────────────────────────────────────────
   const handleWorkerMessage = useCallback((event) => {
     const { type, payload } = event.data;
@@ -123,12 +143,21 @@ export function useAudioSession() {
     switch (type) {
       case 'connected':
         setIsConnected(true);
+        // Send start_session as soon as WS is confirmed open
+        if (workerRef.current) {
+          workerRef.current.postMessage({
+            type: 'send',
+            payload: { event: 'start_session' },
+          });
+        }
         break;
 
       case 'disconnected':
         setIsConnected(false);
-        setIsSessionActive(false);
-        setIsTutorSpeaking(false);
+        // Full cleanup: mic, AudioContext, worklet, state
+        if (endSessionRef.current) {
+          endSessionRef.current();
+        }
         break;
 
       case 'error':
@@ -142,7 +171,7 @@ export function useAudioSession() {
       default:
         console.log('[AudioSession] Unknown worker message type:', type);
     }
-  }, []); // safe — uses ref instead of direct function reference
+  }, []); // safe — uses refs instead of direct function references
 
   // ── Audio Context & Worklet setup ─────────────────────────────────
   const initAudio = useCallback(async () => {
@@ -222,16 +251,9 @@ export function useAudioSession() {
       worker.onmessage = handleWorkerMessage;
       workerRef.current = worker;
 
-      // 3. Connect WebSocket
+      // 3. Connect WebSocket (start_session is sent from handleWorkerMessage
+      //    once the worker confirms 'connected')
       worker.postMessage({ type: 'connect', url: WS_URL });
-
-      // Wait for WS to connect, then start session
-      setTimeout(() => {
-        worker.postMessage({
-          type: 'send',
-          payload: { event: 'start_session' },
-        });
-      }, 500);
 
       // 4. Start mic
       await startMic();
@@ -279,7 +301,20 @@ export function useAudioSession() {
     setIsSessionActive(false);
     setIsConnected(false);
     setIsTutorSpeaking(false);
-  }, []);
+
+    // Reset transient UI state unless caller wants to persist
+    if (!persistSession) {
+      setTranscript([]);
+      setCurrentVisual(null);
+      setIsVisualizationLoading(false);
+      setIsTutorSpeaking(false);
+    }
+  }, [persistSession]);
+
+  // Keep endSessionRef in sync so handleWorkerMessage can call the latest version
+  useEffect(() => {
+    endSessionRef.current = endSession;
+  }, [endSession]);
 
   const toggleMute = useCallback(() => {
     setIsMuted((prev) => !prev);
