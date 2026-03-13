@@ -26,18 +26,23 @@ class GeminiLiveClient:
     Streams audio bidirectionally and emits parsed events via callbacks.
     """
 
-    def __init__(self, on_audio, on_text, on_tool_call, on_turn_complete):
+    def __init__(self, on_audio, on_text, on_tool_call, on_turn_complete,
+                 on_input_transcription=None, on_output_transcription=None):
         """
         Args:
             on_audio:  async callback(bytes) — raw PCM audio chunk from Gemini
             on_text:   async callback(str)   — text/transcript from Gemini
             on_tool_call: async callback(dict) — tool/function call from Gemini
             on_turn_complete: async callback() — Gemini finished a turn
+            on_input_transcription: async callback(str) — user speech transcribed
+            on_output_transcription: async callback(str) — AI speech transcribed
         """
         self.on_audio = on_audio
         self.on_text = on_text
         self.on_tool_call = on_tool_call
         self.on_turn_complete = on_turn_complete
+        self.on_input_transcription = on_input_transcription
+        self.on_output_transcription = on_output_transcription
 
         self._client = genai.Client(
             api_key=settings.GEMINI_API_KEY,
@@ -65,6 +70,8 @@ class GeminiLiveClient:
                 parts=[types.Part(text=TUTOR_SYSTEM_PROMPT)]
             ),
             tools=TUTOR_TOOLS,
+            input_audio_transcription=types.AudioTranscriptionConfig(),
+            output_audio_transcription=types.AudioTranscriptionConfig(),
             session_resumption=types.SessionResumptionConfig(
                 handle=self._session_handle
             ),
@@ -170,14 +177,30 @@ class GeminiLiveClient:
                             turn_complete = getattr(server_content, "turn_complete", False)
                             model_turn = getattr(server_content, "model_turn", None)
                             interrupted = getattr(server_content, "interrupted", False)
+                            input_transcription = getattr(server_content, "input_transcription", None)
+                            output_transcription = getattr(server_content, "output_transcription", None)
 
                             if turn_complete:
                                 logger.debug("Gemini turn_complete received")
                             if interrupted:
                                 logger.info("Gemini turn was interrupted")
 
-                            # Process audio/text BEFORE signalling turn_complete
-                            # so the client receives all data before the "done" flag.
+                            # Handle input transcription (user's speech → text)
+                            if input_transcription:
+                                transcript_text = getattr(input_transcription, "text", None)
+                                if transcript_text and self.on_input_transcription:
+                                    logger.debug(f"Input transcription: {transcript_text[:80]}")
+                                    await self.on_input_transcription(transcript_text)
+
+                            # Handle output transcription (AI's speech → text)
+                            if output_transcription:
+                                transcript_text = getattr(output_transcription, "text", None)
+                                if transcript_text and self.on_output_transcription:
+                                    logger.debug(f"Output transcription: {transcript_text[:80]}")
+                                    await self.on_output_transcription(transcript_text)
+
+                            # Process audio from model turn
+                            # (text parts are model thinking — skip them for transcript)
                             if model_turn:
                                 parts = getattr(model_turn, "parts", None)
                                 if parts:
@@ -185,8 +208,9 @@ class GeminiLiveClient:
                                         inline_data = getattr(part, "inline_data", None)
                                         if inline_data and getattr(inline_data, "data", None):
                                             await self.on_audio(inline_data.data)
+                                        # Log thinking text for debugging only
                                         if getattr(part, "text", None):
-                                            await self.on_text(part.text)
+                                            logger.debug(f"Model thinking (not sent to client): {part.text[:100]}")
 
                             if turn_complete:
                                 await self.on_turn_complete()

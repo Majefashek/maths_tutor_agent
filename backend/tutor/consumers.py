@@ -118,6 +118,8 @@ class TutorConsumer(AsyncWebsocketConsumer):
             on_text=self._handle_gemini_text,
             on_tool_call=self._handle_tool_call,
             on_turn_complete=self._handle_turn_complete,
+            on_input_transcription=self._handle_input_transcription,
+            on_output_transcription=self._handle_output_transcription,
         )
         try:
             await self.gemini.connect()
@@ -154,6 +156,22 @@ class TutorConsumer(AsyncWebsocketConsumer):
         """Notify client that the tutor finished speaking."""
         await self.send(
             text_data=json.dumps({"event": "turn_complete"})
+        )
+
+    async def _handle_input_transcription(self, text: str):
+        """Forward user's speech transcription to the client."""
+        await self.send(
+            text_data=json.dumps(
+                {"event": "transcript", "data": text, "role": "student"}
+            )
+        )
+
+    async def _handle_output_transcription(self, text: str):
+        """Forward AI's spoken words transcription to the client."""
+        await self.send(
+            text_data=json.dumps(
+                {"event": "transcript", "data": text, "role": "tutor"}
+            )
         )
 
     async def _handle_tool_call(self, tool_call: dict):
