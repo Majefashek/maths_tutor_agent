@@ -16,14 +16,31 @@ logger = logging.getLogger(__name__)
 
 MODEL = "gemini-2.5-flash"
 
+# Key fields that must be non-empty for each visual type.
+# Used by the merge fallback to detect incomplete model responses.
+_REQUIRED_FIELDS: dict[str, str] = {
+    "graph_function": "functions",
+    "geometry_shape": "shapes",
+    "number_line": "points",
+    "equation_steps": "steps",
+    "bar_chart": "data",
+}
 
-async def generate_visualization(tool_call_args: dict) -> dict:
+
+async def generate_visualization(
+    tool_call_args: dict,
+    *,
+    previous_visual: dict | None = None,
+) -> dict:
     """
     Given the tool call arguments from the Tutor Agent, call the
     standard Gemini API to produce structured visual JSON.
 
     Args:
         tool_call_args: dict with keys like visual_type, concept, parameters
+        previous_visual: the last visual sent to the client, if any.
+                         Used to give the model context so it can update
+                         rather than recreate a visual from scratch.
 
     Returns:
         Parsed dict ready to be sent to the frontend as a VISUAL_READY event.
@@ -41,6 +58,14 @@ async def generate_visualization(tool_call_args: dict) -> dict:
         f"Additional parameters: {json.dumps(params)}\n\n"
         f"Return ONLY the JSON object matching the '{visual_type}' schema."
     )
+
+    # ── Inject previous visual context when updating ──────────────────
+    if previous_visual is not None:
+        user_prompt += (
+            "\n\nCurrently displayed visual (update this, do not start from scratch):\n"
+            + json.dumps(previous_visual, indent=2)
+            + "\nApply the requested changes to the above visual and return the complete updated JSON."
+        )
 
     import time
     start_time = time.time()
@@ -78,6 +103,19 @@ async def generate_visualization(tool_call_args: dict) -> dict:
         # Ensure visual_type is set
         if "visual_type" not in visual_data:
             visual_data["visual_type"] = visual_type
+
+        # ── Merge fallback: fill in missing key fields from previous visual ──
+        if previous_visual is not None:
+            key_field = _REQUIRED_FIELDS.get(visual_type)
+            if key_field and not visual_data.get(key_field):
+                logger.warning(
+                    "Merge fallback triggered: model response missing '%s' for "
+                    "visual_type '%s'. Merging with previous visual.",
+                    key_field,
+                    visual_type,
+                )
+                merged = {**previous_visual, **visual_data}
+                visual_data = merged
 
         return visual_data
 

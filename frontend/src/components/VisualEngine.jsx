@@ -7,7 +7,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar, Cell, ReferenceDot, Legend,
+  PieChart, Pie
 } from 'recharts';
+
+import { RotatingGeometryVisual, CoordinateSystemVisual } from './ThreeVisuals';
+import { SurfacePlotVisual, VectorFieldVisual, ScatterPlotVisual } from './PlotlyVisuals';
 
 // ── Generate data points for a math expression ────────────────────
 function evaluateExpression(expr, xMin, xMax, steps = 200) {
@@ -178,6 +182,45 @@ function BarChartVisual({ visual }) {
             ))}
           </Bar>
         </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+// ── Pie Chart Visual ──────────────────────────────────────────────
+function PieChartVisual({ visual }) {
+  const chartData = visual.data || [];
+  const defaultColors = ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#06b6d4'];
+
+  return (
+    <div className="chart-container" style={{ display: 'flex', justifyContent: 'center' }}>
+      <ResponsiveContainer width="100%" height={300}>
+        <PieChart>
+          <Pie
+            data={chartData}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            outerRadius={100}
+            fill="#8884d8"
+            dataKey="value"
+            nameKey="name"
+            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+          >
+            {chartData.map((entry, i) => (
+              <Cell key={`cell-${i}`} fill={entry.color || defaultColors[i % defaultColors.length]} />
+            ))}
+          </Pie>
+          <Tooltip
+            contentStyle={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-glass)',
+              borderRadius: 'var(--radius-sm)',
+              color: 'var(--text-primary)',
+            }}
+          />
+          <Legend />
+        </PieChart>
       </ResponsiveContainer>
     </div>
   );
@@ -414,11 +457,21 @@ export default function VisualEngine({ visual, isLoading = false }) {
           >
             {visual.title && <h3 className="visual-title">{visual.title}</h3>}
 
+            {console.log('VisualEngine rendering type:', visual.visual_type, visual)}
+
             {visual.visual_type === 'graph_function' && <GraphVisual visual={visual} />}
             {visual.visual_type === 'equation_steps' && <EquationStepsVisual visual={visual} />}
             {visual.visual_type === 'bar_chart' && <BarChartVisual visual={visual} />}
+            {visual.visual_type === 'pie_chart' && <PieChartVisual visual={visual} />}
             {visual.visual_type === 'number_line' && <NumberLineVisual visual={visual} />}
             {visual.visual_type === 'geometry_shape' && <GeometryVisual visual={visual} />}
+            {visual.visual_type === 'scatter_plot' && <ScatterPlotVisual visual={visual} />}
+            
+            {/* 3D and Advanced Vis */}
+            {visual.visual_type === 'rotating_geometry' && <RotatingGeometryVisual visual={visual} />}
+            {visual.visual_type === 'coordinate_system' && <CoordinateSystemVisual visual={visual} />}
+            {visual.visual_type === 'surface_plot' && <SurfacePlotVisual visual={visual} />}
+            {visual.visual_type === 'vector_field' && <VectorFieldVisual visual={visual} />}
 
             {visual.error && (
               <p style={{ color: 'var(--color-error)', textAlign: 'center' }}>

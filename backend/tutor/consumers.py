@@ -41,6 +41,7 @@ class TutorConsumer(AsyncWebsocketConsumer):
         self.gemini: GeminiLiveClient | None = None
         self._viz_tasks: set[asyncio.Task] = set()
         self._tool_call_pending = False
+        self._current_visual: dict | None = None
 
     # ── Connection lifecycle ──────────────────────────────────────────
 
@@ -60,6 +61,7 @@ class TutorConsumer(AsyncWebsocketConsumer):
         for task in self._viz_tasks:
             task.cancel()
         self._viz_tasks.clear()
+        self._current_visual = None
 
     # ── Inbound message routing ───────────────────────────────────────
 
@@ -221,7 +223,7 @@ class TutorConsumer(AsyncWebsocketConsumer):
     async def _generate_and_send_visual(self, args: dict, call_id: str, func_name: str):
         """Background task: generate visual JSON, push to client, and THEN reply to Gemini."""
         try:
-            visual_data = await generate_visualization(args)
+            visual_data = await generate_visualization(args, previous_visual=self._current_visual)
             await self.send(
                 text_data=json.dumps(
                     {
@@ -231,6 +233,7 @@ class TutorConsumer(AsyncWebsocketConsumer):
                     }
                 )
             )
+            self._current_visual = visual_data
             logger.info("Visual sent to client: %s", visual_data.get("visual_type"))
             
             # Step 3: Respond to Gemini with the tool result so it resumes speaking

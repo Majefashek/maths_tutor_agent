@@ -32,6 +32,13 @@ number line, or equation breakdown — call the `generate_math_visual` function.
 - `equation_steps` — break down an equation into step-by-step transformations.
 - `bar_chart` — show data comparisons.
 
+## Updating Visuals
+When a student asks to change or update a visual that is already on screen:
+1. Call `generate_math_visual` again with the SAME visual_type as before.
+2. In the parameters, include ALL fields from the previous visual plus your changes.
+3. Never omit existing data when updating — always pass the complete picture.
+4. Tell the student what you are changing before calling the tool.
+
 ## Tone
 Encouraging, warm, concise. Never condescending. Sound like a cool older \
 sibling who happens to be great at maths.
@@ -135,10 +142,15 @@ TUTOR_TOOLS = [
                         "parameters": types.Schema(
                             type="OBJECT",
                             description=(
-                                "Type-specific parameters. For graph_function: equation, x_range, "
-                                "highlight_points. For geometry_shape: shapes list. "
-                                "For number_line: range, points. For equation_steps: equation. "
-                                "For bar_chart: data items."
+                                "Type-specific parameters. Always include the COMPLETE set of "
+                                "parameters for the visual, not just what changed. "
+                                "For graph_function: all functions, x_range, y_range, highlight_points. "
+                                "For geometry_shape: all shapes. "
+                                "For number_line: full range, all points, all regions. "
+                                "For equation_steps: all steps. "
+                                "For bar_chart: all data items. "
+                                "If updating an existing visual, re-send all existing parameters "
+                                "plus the changes."
                             ),
                         ),
                     },
