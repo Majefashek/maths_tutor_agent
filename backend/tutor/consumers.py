@@ -246,8 +246,10 @@ class TutorConsumer(AsyncWebsocketConsumer):
                             name=func_name,
                             response={
                                 "result": (
-                                    "The visualization has been successfully generated and is now displayed on the user's screen. "
-                                    "You may now continue your explanation, referencing the visualization."
+                                    "The visualization is now displayed on the student's screen. "
+                                    "Continue your explanation and reference what's shown. "
+                                    "If you are solving an equation, remember to call the tool again "
+                                    "with the NEXT step as you explain it — keep building the visual progressively."
                                 )
                             },
                         )
