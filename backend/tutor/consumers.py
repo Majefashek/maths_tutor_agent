@@ -268,7 +268,10 @@ class TutorConsumer(AsyncWebsocketConsumer):
                         types.FunctionResponse(
                             id=call_id,
                             name=func_name,
-                            response={"result": result_text},
+                            response={
+                                "result": result_text,
+                                "rendered_visual_details": visual_data
+                            },
                         )
                     ]
                 )

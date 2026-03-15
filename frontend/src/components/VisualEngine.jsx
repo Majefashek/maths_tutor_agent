@@ -8,7 +8,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, BarChart, Bar, Cell, ReferenceDot, Legend,
+  ResponsiveContainer, BarChart, Bar, Cell, ReferenceDot, ReferenceLine, Legend,
   PieChart, Pie
 } from 'recharts';
 
@@ -61,6 +61,9 @@ function GraphVisual({ visual }) {
   const functions = visual.functions || [];
   const highlights = visual.highlight_points || [];
 
+  const xDomainMax = Math.max(Math.abs(xRange[0]), Math.abs(xRange[1]));
+  const symXDomain = [-xDomainMax, xDomainMax];
+
   const colors = ['#6366f1', '#f59e0b', '#10b981', '#f87171', '#8b5cf6'];
 
   // Generate data for all functions
@@ -71,15 +74,20 @@ function GraphVisual({ visual }) {
   }));
 
   // Combine all data points with unique x values
+  let yMaxRaw = 0;
   const mergedMap = new Map();
   datasets.forEach((ds, i) => {
     ds.data.forEach((point) => {
+      if (Math.abs(point.y) > yMaxRaw) yMaxRaw = Math.abs(point.y);
       if (!mergedMap.has(point.x)) {
         mergedMap.set(point.x, { x: point.x });
       }
       mergedMap.get(point.x)[`y${i}`] = point.y;
     });
   });
+  
+  const yDomainMax = yMaxRaw === 0 ? 10 : Math.ceil(yMaxRaw * 1.1);
+  const symYDomain = [-yDomainMax, yDomainMax];
   const mergedData = Array.from(mergedMap.values()).sort((a, b) => a.x - b.x);
 
   // Progressive draw animation
@@ -126,14 +134,21 @@ function GraphVisual({ visual }) {
         <LineChart data={slicedData} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.15)" />
           <XAxis
+            type="number"
             dataKey="x"
+            domain={symXDomain}
             stroke="var(--text-muted)"
             fontSize={12}
+            axisLine={false}
+            tickLine={false}
             tickFormatter={(v) => v.toFixed(1)}
           />
           <YAxis
+            domain={symYDomain}
             stroke="var(--text-muted)"
             fontSize={12}
+            axisLine={false}
+            tickLine={false}
             tickFormatter={(v) => v.toFixed(1)}
           />
           <Tooltip
@@ -145,6 +160,8 @@ function GraphVisual({ visual }) {
             }}
           />
           <Legend />
+          <ReferenceLine y={0} stroke="var(--text-primary)" strokeWidth={2} strokeOpacity={0.8} />
+          <ReferenceLine x={0} stroke="var(--text-primary)" strokeWidth={2} strokeOpacity={0.8} />
           {datasets.map((ds, i) => (
             <Line
               key={i}
@@ -624,8 +641,18 @@ function GeometryVisual({ visual }) {
         return 2 * Math.PI * (p.r || 80);
       case 'rectangle':
         return 2 * ((p.width || 200) + (p.height || 150));
-      case 'triangle':
-        return 600; // safe default
+      case 'triangle': {
+        if (p.points) {
+           return 1000; // Large enough fallback for custom string points
+        }
+        const w = p.width || 150;
+        const h = p.height || 150;
+        if (p.is_right_angled) {
+          return w + h + Math.sqrt(w*w + h*h); // right-angled perimeter
+        } else {
+          return w + 2 * Math.sqrt((w/2)*(w/2) + h*h); // isosceles perimeter
+        }
+      }
       case 'line': {
         const dx = (p.x2 || 350) - (p.x1 || 50);
         const dy = (p.y2 || 350) - (p.y1 || 50);
@@ -681,7 +708,23 @@ function GeometryVisual({ visual }) {
                 />
               );
             case 'triangle': {
-              const pts = p.points || '200,100 100,300 300,300';
+              let pts = p.points;
+              if (!pts) {
+                // Generate points based on properties if explicit points aren't provided
+                const x = p.x || 100;
+                const y = p.y || 100;
+                const w = p.width || 150;
+                const h = p.height || 150;
+                
+                if (p.is_right_angled) {
+                  // Right angled triangle: bottom-left, top-left, bottom-right
+                  pts = `${x},${y+h} ${x},${y} ${x+w},${y+h}`;
+                } else {
+                  // Isosceles triangle: bottom-left, top-middle, bottom-right
+                  pts = `${x},${y+h} ${x+(w/2)},${y} ${x+w},${y+h}`;
+                }
+              }
+
               return (
                 <polygon
                   key={i}

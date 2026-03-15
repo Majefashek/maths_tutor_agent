@@ -7,6 +7,10 @@
 
 import React, { useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
 /* ── Typing indicator (three bouncing dots) ────────────────────────── */
 function TypingDots() {
@@ -21,6 +25,11 @@ function TypingDots() {
 
 /* ── Single transcript message (memoised) ──────────────────────────── */
 const TranscriptMessage = React.memo(function TranscriptMessage({ msg }) {
+  // Preprocess text to ensure \[ \] and \( \) become $$ $$ and $ $
+  const formattedText = (msg.text || '')
+    .replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$')
+    .replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$');
+
   return (
     <motion.div
       key={msg.id}
@@ -33,8 +42,13 @@ const TranscriptMessage = React.memo(function TranscriptMessage({ msg }) {
       <div className="role">
         {msg.role === 'tutor' ? '🎓 Tutor' : '🙋 You'}
       </div>
-      <div className="text">
-        {msg.text}
+      <div className="text text-markdown">
+        <ReactMarkdown
+          remarkPlugins={[remarkMath]}
+          rehypePlugins={[rehypeKatex]}
+        >
+          {formattedText}
+        </ReactMarkdown>
         {msg.isStreaming && <TypingDots />}
       </div>
     </motion.div>

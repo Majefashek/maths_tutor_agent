@@ -354,6 +354,89 @@ body::before {
   color: var(--text-primary);
 }
 
+.text-markdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.text-markdown p { margin: 0; }
+.text-markdown ul, .text-markdown ol { padding-left: 20px; margin: 0; }
+.text-markdown li { margin-bottom: 4px; }
+.text-markdown h1, .text-markdown h2, .text-markdown h3, .text-markdown h4 {
+  margin: 6px 0 2px 0;
+  font-size: 1.05em;
+}
+.text-markdown strong { font-weight: 600; color: var(--text-primary); }
+.text-markdown em { font-style: italic; color: var(--text-secondary); }
+.text-markdown blockquote {
+  border-left: 3px solid var(--accent-start);
+  padding-left: 12px;
+  margin: 8px 0;
+  color: var(--text-secondary);
+  font-style: italic;
+  background: rgba(99, 102, 241, 0.05);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.text-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+.text-markdown th, .text-markdown td {
+  border: 1px solid var(--border-glass);
+  padding: 8px 12px;
+  text-align: left;
+}
+.text-markdown th {
+  background: var(--bg-tertiary);
+  font-weight: 600;
+}
+.text-markdown tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+.text-markdown code {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+.text-markdown pre {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+}
+.text-markdown pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.text-markdown .katex-display {
+  margin: 1.5rem 0;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-glass-hover);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(99, 102, 241, 0.1);
+  text-align: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.text-markdown .katex-display:hover {
+  transform: scale(1.01);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.5), 0 0 20px rgba(99, 102, 241, 0.2);
+}
+
+.text-markdown .katex {
+  font-size: 1.1em;
+  color: var(--text-primary);
+  /* Ensure math is readable in dark mode */
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
 @keyframes messageSlide {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
