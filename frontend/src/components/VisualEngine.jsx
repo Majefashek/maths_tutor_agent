@@ -7,7 +7,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar, Cell, ReferenceDot, Legend,
   PieChart, Pie
 } from 'recharts';
@@ -341,6 +341,111 @@ function PieChartVisual({ visual }) {
   );
 }
 
+// ── Line Chart Visual ──────────────────────────────────────────────
+function LineChartVisual({ visual }) {
+  const chartData = visual.data || [];
+  const defaultColors = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#34d399'];
+
+  return (
+    <div className="chart-container">
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={chartData} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.15)" />
+          <XAxis dataKey="label" stroke="var(--text-muted)" fontSize={12} />
+          <YAxis stroke="var(--text-muted)" fontSize={12} />
+          <Tooltip
+            contentStyle={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-glass)',
+              borderRadius: 'var(--radius-sm)',
+              color: 'var(--text-primary)',
+            }}
+          />
+          <Line type="monotone" dataKey="value" stroke={defaultColors[0]} strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+// ── Histogram Visual ───────────────────────────────────────────────
+function HistogramVisual({ visual }) {
+  const chartData = visual.data || [];
+  const color = visual.color || '#6366f1';
+
+  return (
+    <div className="chart-container">
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart data={chartData} margin={{ top: 10, right: 20, bottom: 10, left: 10 }} barCategoryGap={0} barGap={0}>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.15)" />
+          <XAxis dataKey="label" stroke="var(--text-muted)" fontSize={12} />
+          <YAxis stroke="var(--text-muted)" fontSize={12} />
+          <Tooltip
+            contentStyle={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-glass)',
+              borderRadius: 'var(--radius-sm)',
+              color: 'var(--text-primary)',
+            }}
+          />
+          <Bar dataKey="value" fill={color} stroke="white" strokeWidth={1} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+// ── Bell Curve Visual ──────────────────────────────────────────────
+function BellCurveVisual({ visual }) {
+  const mean = visual.mean !== undefined ? visual.mean : 0;
+  const std_dev = visual.std_dev !== undefined ? visual.std_dev : 1;
+
+  // Generate data points for the normal distribution
+  const data = useMemo(() => {
+    const pts = [];
+    const minX = mean - 4 * std_dev;
+    const maxX = mean + 4 * std_dev;
+    const steps = 100;
+    const stepX = (maxX - minX) / steps;
+    
+    for (let i = 0; i <= steps; i++) {
+      const x = minX + i * stepX;
+      const exponent = -0.5 * Math.pow((x - mean) / std_dev, 2);
+      const coefficient = 1 / (std_dev * Math.sqrt(2 * Math.PI));
+      const y = coefficient * Math.exp(exponent);
+      pts.push({ x: Number(x.toFixed(2)), y: Number(y.toFixed(4)) });
+    }
+    return pts;
+  }, [mean, std_dev]);
+
+  const color = visual.color || '#8b5cf6';
+
+  return (
+    <div className="chart-container">
+      <ResponsiveContainer width="100%" height={300}>
+        <AreaChart data={data} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.15)" />
+          <XAxis dataKey="x" stroke="var(--text-muted)" fontSize={12} />
+          <YAxis stroke="var(--text-muted)" fontSize={12} />
+          <Tooltip
+            contentStyle={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-glass)',
+              borderRadius: 'var(--radius-sm)',
+              color: 'var(--text-primary)',
+            }}
+            formatter={(value) => value.toFixed(4)}
+          />
+          <Area type="monotone" dataKey="y" stroke={color} fill={color} fillOpacity={0.3} />
+          
+          {/* Optional: Reference line for mean */}
+          <ReferenceDot x={mean} y={0} r={0} stroke="none" label={{ value: 'μ', position: 'bottom', fill: 'var(--text-primary)' }} />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 // ── Number Line Visual — draw line then pop points ────────────────
 function NumberLineVisual({ visual }) {
   const range = visual.range || [0, 10];
@@ -668,15 +773,24 @@ export default function VisualEngine({ visual, isLoading = false }) {
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.4 }}
           >
+            {visual.is_problem && (
+              <div className="problem-badge">
+                <span className="problem-badge-icon">✏️</span>
+                <span className="problem-badge-text">Your Turn — Solve it!</span>
+              </div>
+            )}
             {visual.title && <h3 className="visual-title">{visual.title}</h3>}
 
             {visual.visual_type === 'graph_function' && <GraphVisual key={visualKey} visual={visual} />}
             {visual.visual_type === 'equation_steps' && <EquationStepsVisual key={visualKey} visual={visual} />}
             {visual.visual_type === 'bar_chart' && <BarChartVisual key={visualKey} visual={visual} />}
-            {visual.visual_type === 'pie_chart' && <PieChartVisual visual={visual} />}
+            {visual.visual_type === 'pie_chart' && <PieChartVisual key={visualKey} visual={visual} />}
+            {visual.visual_type === 'line_chart' && <LineChartVisual key={visualKey} visual={visual} />}
+            {visual.visual_type === 'histogram' && <HistogramVisual key={visualKey} visual={visual} />}
+            {visual.visual_type === 'bell_curve' && <BellCurveVisual key={visualKey} visual={visual} />}
             {visual.visual_type === 'number_line' && <NumberLineVisual key={visualKey} visual={visual} />}
             {visual.visual_type === 'geometry_shape' && <GeometryVisual key={visualKey} visual={visual} />}
-            {visual.visual_type === 'scatter_plot' && <ScatterPlotVisual visual={visual} />}
+            {visual.visual_type === 'scatter_plot' && <ScatterPlotVisual key={visualKey} visual={visual} />}
             
             {/* 3D and Advanced Vis */}
             {visual.visual_type === 'rotating_geometry' && <RotatingGeometryVisual visual={visual} />}

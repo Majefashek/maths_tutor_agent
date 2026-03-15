@@ -155,6 +155,30 @@ export function ScatterPlotVisual({ visual }) {
     const text = dataPoints.map(d => d.label || '');
     const markerColors = dataPoints.map(d => d.color || '#6366f1');
     
+    // Calculate ranges to ensure a single coordinate doesn't break Plotly's auto-scaling
+    let minX = x.length > 0 ? Math.min(...x) : -10;
+    let maxX = x.length > 0 ? Math.max(...x) : 10;
+    let minY = y.length > 0 ? Math.min(...y) : -10;
+    let maxY = y.length > 0 ? Math.max(...y) : 10;
+    let minZ = z.length > 0 ? Math.min(...z) : -10;
+    let maxZ = z.length > 0 ? Math.max(...z) : 10;
+
+    // Prevent min == max, which breaks the ticks
+    if (minX === maxX) { minX -= 5; maxX += 5; }
+    if (minY === maxY) { minY -= 5; maxY += 5; }
+    if (minZ === maxZ) { minZ -= 5; maxZ += 5; }
+    
+    // Make sure the origin (0,0) is included if we're nearby, to provide context
+    if (minX > 0 && minX <= 5) minX = -1;
+    if (maxX < 0 && maxX >= -5) maxX = 1;
+    if (minY > 0 && minY <= 5) minY = -1;
+    if (maxY < 0 && maxY >= -5) maxY = 1;
+
+    // Add 10% padding
+    const padX = (maxX - minX) * 0.1;
+    const padY = (maxY - minY) * 0.1;
+    const padZ = (maxZ - minZ) * 0.1;
+
     return (
         <div className="plotly-container" style={{ width: '100%', height: '400px' }}>
             <Plot
@@ -177,12 +201,12 @@ export function ScatterPlotVisual({ visual }) {
                     paper_bgcolor: 'transparent',
                     plot_bgcolor: 'transparent',
                     font: { color: '#e5e7eb' },
-                    xaxis: { gridcolor: '#374151', zerolinecolor: '#6b7280' },
-                    yaxis: { gridcolor: '#374151', zerolinecolor: '#6b7280' },
+                    xaxis: { gridcolor: '#374151', zerolinecolor: '#6b7280', range: [minX - padX, maxX + padX], zerolinewidth: 2 },
+                    yaxis: { gridcolor: '#374151', zerolinecolor: '#6b7280', range: [minY - padY, maxY + padY], zerolinewidth: 2 },
                     scene: is3D ? {
-                        xaxis: { gridcolor: '#374151', zerolinecolor: '#6b7280' },
-                        yaxis: { gridcolor: '#374151', zerolinecolor: '#6b7280' },
-                        zaxis: { gridcolor: '#374151', zerolinecolor: '#6b7280' },
+                        xaxis: { gridcolor: '#374151', zerolinecolor: '#6b7280', range: [minX - padX, maxX + padX], zerolinewidth: 2 },
+                        yaxis: { gridcolor: '#374151', zerolinecolor: '#6b7280', range: [minY - padY, maxY + padY], zerolinewidth: 2 },
+                        zaxis: { gridcolor: '#374151', zerolinecolor: '#6b7280', range: [minZ - padZ, maxZ + padZ], zerolinewidth: 2 },
                     } : undefined
                 }}
                 useResizeHandler={true}

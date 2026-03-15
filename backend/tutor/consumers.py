@@ -189,7 +189,8 @@ class TutorConsumer(AsyncWebsocketConsumer):
 
         logger.info(f"Intercepted Gemini Tool Call: {func_name} (ID: {call_id}) with args: {args}")
 
-        if func_name == "generate_math_visual":
+        if func_name in ("generate_math_visual", "generate_problem_visual"):
+            is_problem = func_name == "generate_problem_visual"
             self._tool_call_pending = True
             # Step 1: Notify frontend that a visual is being generated
             await self.send(
@@ -198,12 +199,15 @@ class TutorConsumer(AsyncWebsocketConsumer):
                         "event": "VISUAL_GENERATING",
                         "visual_type": args.get("visual_type", ""),
                         "concept": args.get("concept", ""),
+                        "is_problem": is_problem,
                     }
                 )
             )
 
             # Step 2: Spawn async visualization task and wait for it to respond to Gemini
-            task = asyncio.create_task(self._generate_and_send_visual(args, call_id, func_name))
+            task = asyncio.create_task(
+                self._generate_and_send_visual(args, call_id, func_name, is_problem=is_problem)
+            )
             self._viz_tasks.add(task)
             task.add_done_callback(self._viz_tasks.discard)
         else:
@@ -220,10 +224,14 @@ class TutorConsumer(AsyncWebsocketConsumer):
                     ]
                 )
 
-    async def _generate_and_send_visual(self, args: dict, call_id: str, func_name: str):
+    async def _generate_and_send_visual(self, args: dict, call_id: str, func_name: str, *, is_problem: bool = False):
         """Background task: generate visual JSON, push to client, and THEN reply to Gemini."""
         try:
-            visual_data = await generate_visualization(args, previous_visual=self._current_visual)
+            visual_data = await generate_visualization(
+                args,
+                previous_visual=self._current_visual,
+                is_problem=is_problem,
+            )
             await self.send(
                 text_data=json.dumps(
                     {
@@ -234,24 +242,33 @@ class TutorConsumer(AsyncWebsocketConsumer):
                 )
             )
             self._current_visual = visual_data
-            logger.info("Visual sent to client: %s", visual_data.get("visual_type"))
+            logger.info("Visual sent to client: %s (is_problem=%s)", visual_data.get("visual_type"), is_problem)
             
             # Step 3: Respond to Gemini with the tool result so it resumes speaking
             if self.gemini and self.gemini._session:
                 logger.info(f"Sending tool response back to Gemini for {func_name} (ID: {call_id})...")
+
+                if is_problem:
+                    result_text = (
+                        "The PROBLEM is now displayed on the student's screen (without the solution). "
+                        "Ask the student to solve it and WAIT for their answer. "
+                        "Do NOT reveal the solution or walk through the steps yet. "
+                        "Only help if the student asks for a hint or gets stuck."
+                    )
+                else:
+                    result_text = (
+                        "The visualization is now displayed on the student's screen. "
+                        "Continue your explanation and reference what's shown. "
+                        "If you are solving an equation, remember to call the tool again "
+                        "with the NEXT step as you explain it — keep building the visual progressively."
+                    )
+
                 await self.gemini.send_tool_response(
                     [
                         types.FunctionResponse(
                             id=call_id,
                             name=func_name,
-                            response={
-                                "result": (
-                                    "The visualization is now displayed on the student's screen. "
-                                    "Continue your explanation and reference what's shown. "
-                                    "If you are solving an equation, remember to call the tool again "
-                                    "with the NEXT step as you explain it — keep building the visual progressively."
-                                )
-                            },
+                            response={"result": result_text},
                         )
                     ]
                 )

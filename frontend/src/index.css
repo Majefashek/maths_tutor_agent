@@ -426,6 +426,40 @@ body::before {
   text-align: center;
 }
 
+/* Problem badge — shown for problem visuals */
+.problem-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 20px;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.1));
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: var(--radius-full);
+  align-self: center;
+  animation: problemPulse 2s ease-in-out infinite;
+}
+
+.problem-badge-icon {
+  font-size: 1.1rem;
+}
+
+.problem-badge-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-warning);
+  letter-spacing: 0.03em;
+}
+
+@keyframes problemPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 16px 4px rgba(251, 191, 36, 0.15);
+  }
+}
+
 /* Equation steps */
 .equation-steps {
   display: flex;

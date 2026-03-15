@@ -10,7 +10,7 @@ from google import genai
 from google.genai import types
 from django.conf import settings
 
-from .prompts import VISUALIZATION_AGENT_PROMPT
+from .prompts import VISUALIZATION_AGENT_PROMPT, PROBLEM_VISUALIZATION_AGENT_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +24,11 @@ _REQUIRED_FIELDS: dict[str, str] = {
     "number_line": "points",
     "equation_steps": "steps",
     "bar_chart": "data",
+    "line_chart": "data",
+    "pie_chart": "data",
+    "histogram": "data",
+    "bell_curve": "mean",
+    "scatter_plot": "data",
 }
 
 
@@ -31,6 +36,7 @@ async def generate_visualization(
     tool_call_args: dict,
     *,
     previous_visual: dict | None = None,
+    is_problem: bool = False,
 ) -> dict:
     """
     Given the tool call arguments from the Tutor Agent, call the
@@ -41,6 +47,8 @@ async def generate_visualization(
         previous_visual: the last visual sent to the client, if any.
                          Used to give the model context so it can update
                          rather than recreate a visual from scratch.
+        is_problem: if True, use the Problem Visualization Agent prompt
+                    to generate an unsolved problem (no solutions).
 
     Returns:
         Parsed dict ready to be sent to the frontend as a VISUAL_READY event.
@@ -53,11 +61,22 @@ async def generate_visualization(
     if params is None:
         params = {}
 
-    user_prompt = (
-        f"Generate a '{visual_type}' visualization for the concept: {concept}.\n"
-        f"Additional parameters: {json.dumps(params)}\n\n"
-        f"Return ONLY the JSON object matching the '{visual_type}' schema."
-    )
+    if is_problem:
+        user_prompt = (
+            f"Generate a '{visual_type}' PROBLEM visualization for: {concept}.\n"
+            f"Additional parameters: {json.dumps(params)}\n\n"
+            f"CRITICAL: Show ONLY the problem — do NOT include the solution or answer.\n"
+            f"Return ONLY the JSON object matching the '{visual_type}' schema with "
+            f"\"is_problem\": true."
+        )
+        system_prompt = PROBLEM_VISUALIZATION_AGENT_PROMPT
+    else:
+        user_prompt = (
+            f"Generate a '{visual_type}' visualization for the concept: {concept}.\n"
+            f"Additional parameters: {json.dumps(params)}\n\n"
+            f"Return ONLY the JSON object matching the '{visual_type}' schema."
+        )
+        system_prompt = VISUALIZATION_AGENT_PROMPT
 
     # ── Inject previous visual context when updating ──────────────────
     if previous_visual is not None:
@@ -80,7 +99,7 @@ async def generate_visualization(
             model=MODEL,
             contents=user_prompt,
             config=types.GenerateContentConfig(
-                system_instruction=VISUALIZATION_AGENT_PROMPT,
+                system_instruction=system_prompt,
                 temperature=0.2,  # Low temp for structured output
                 response_mime_type="application/json",
             ),
@@ -103,6 +122,10 @@ async def generate_visualization(
         # Ensure visual_type is set
         if "visual_type" not in visual_data:
             visual_data["visual_type"] = visual_type
+
+        # Ensure is_problem flag is set for problem visuals
+        if is_problem:
+            visual_data["is_problem"] = True
 
         # ── Merge fallback: fill in missing key fields from previous visual ──
         if previous_visual is not None:
