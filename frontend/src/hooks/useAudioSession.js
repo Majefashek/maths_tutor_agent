@@ -5,7 +5,9 @@
 
 import { useRef, useState, useCallback, useEffect } from 'react';
 
-const WS_URL = `ws://${window.location.hostname || 'localhost'}:9000/ws/tutor/session/`;
+const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const WS_URL = `${protocol}//${window.location.host}/ws/tutor/session/`;
+
 
 /**
  * @returns {{

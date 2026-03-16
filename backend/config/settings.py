@@ -17,7 +17,10 @@ SECRET_KEY = os.getenv(
 )
 DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes")
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["*"]  # Cloud Run uses dynamic hostnames
+if not DEBUG:
+    ALLOWED_HOSTS = [os.getenv("ALLOWED_HOST", "*")]
+
 CORS_ALLOW_ALL_ORIGINS = True  # For debugging
 
 # ── Gemini ────────────────────────────────────────────────────────────
@@ -40,6 +43,7 @@ INSTALLED_APPS = [
 # ── Middleware ─────────────────────────────────────────────────────────
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -101,7 +105,16 @@ USE_TZ = True
 
 # ── Static ────────────────────────────────────────────────────────────
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+# Ensure static folder exists
+os.makedirs(BASE_DIR / "static", exist_ok=True)
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
 
 # ── Logging ───────────────────────────────────────────────────────────
 LOGGING = {
