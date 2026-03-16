@@ -192,7 +192,7 @@ export function useAudioSession({ persistSession = false } = {}) {
     const ctx = new AudioContext({ sampleRate: 24000 });
     audioCtxRef.current = ctx;
 
-    await ctx.audioWorklet.addModule('/pcmProcessor.js');
+    await ctx.audioWorklet.addModule(`${import.meta.env.BASE_URL}pcmProcessor.js`);
     const workletNode = new AudioWorkletNode(ctx, 'pcm-processor');
     workletNode.connect(ctx.destination);
     workletNodeRef.current = workletNode;
