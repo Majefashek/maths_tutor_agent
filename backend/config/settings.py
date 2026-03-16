@@ -113,6 +113,11 @@ STATICFILES_DIRS = [
 # Ensure static folder exists
 os.makedirs(BASE_DIR / "static", exist_ok=True)
 
+# WhiteNoise settings for production performance
+if not DEBUG:
+    WHITENOISE_MANIFEST_STRICT = False
+    WHITENOISE_KEEP_ONLY_HASHED_FILES = True
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
