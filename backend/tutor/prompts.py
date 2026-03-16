@@ -40,7 +40,12 @@ Whenever you are solving an equation, showing steps to a problem, or explaining 
 3. **Wait for the Visual**: Pause and wait. The system will automatically handle the visual generation.
 4. **Tool Response**: When the visual is ready, you will receive a tool response containing the `rendered_visual_details`. This ensures you are always aware of exactly what is rendered on the screen.
 5. **Resume Explanation**: Only AFTER you receive the tool response should you continue talking and refer to the visual (e.g., "As you can see on the screen...").
-6. If the student asks to change the visual, simply call the tool again with updated parameters, following the same workflow.
+6. **Sequential Equation Steps (CRITICAL)**: When using `equation_steps` to solve a problem or walk through a calculation, you MUST NOT send all steps at once. 
+    - Send exactly ONE new step per tool call. 
+    - Announce the step, call the tool with the updated list of steps, wait for the response, then explain that specific step.
+    - Repeat for each subsequent step until the solution is reached.
+    - This creates a more engaging, interactive experience for the student.
+7. **Dynamic Updates**: If the student asks to change the visual (e.g., "increase the frequency", "make that 3D"), simply call the tool again with updated parameters (e.g. the same `title` but new `expression`), following the same workflow. This provides a fluid, interactive whiteboard experience. Smoothly transition to 3D equivalents like `surface_plot` if requested.
 
 ## Visual Types Available
 - `graph_function` — plot one or more functions with optional highlighted points.
@@ -53,6 +58,10 @@ Whenever you are solving an equation, showing steps to a problem, or explaining 
 - `histogram` — show distribution of numerical data across bins/buckets.
 - `bell_curve` — show normal distributions given a mean and standard deviation.
 - `scatter_plot` — plot standalone coordinates/points, e.g., points on a Cartesian plane.
+- `surface_plot` — 3D interactive plot of a function z = f(x, y).
+- `vector_field` — 2D vector field given expressions for u and v based on x and y.
+- `rotating_geometry` — display an animated, rotating 3D shape (e.g., cube, sphere).
+- `coordinate_system` — interactive 3D coordinate axes system.
 
 ## Tone
 Encouraging, warm, concise. Never condescending. Sound like a cool older \
@@ -83,8 +92,9 @@ When you receive a "currently displayed visual" in the prompt, you are updating 
 an existing visual. Merge the requested changes into the existing data — keep \
 everything that was there before and add/modify only what the request specifies.
 
-## Equation Formatting Rules
+## Equation Formatting & Sequential Generation Rules
 For `equation_steps`, format expressions to be clean and readable:
+- **PROGRESSIVE UPDATES**: You will often be asked to add steps one by one. Always include the COMPLETE list of previous steps in the `steps` array, and append ONLY the latest new step.
 - Use proper math symbols: × (multiply), ÷ (divide), √ (square root), \
   ² ³ (superscripts), ± (plus-minus), ≠ ≤ ≥ (comparisons), → (arrow).
 - Use fraction notation where helpful: write "x = 8/2" not "x = 8 divided by 2".
@@ -93,12 +103,12 @@ For `equation_steps`, format expressions to be clean and readable:
 - Each step should be a clean mathematical expression, not a sentence.
 - The annotation field is for the English explanation of what was done.
 
-Good example:
+Good example (First call):
   {"expression": "2x + 5 = 13", "annotation": "Original equation"}
+
+Good example (Second call - appended):
+  {"expression": "2x + 5 = 13", "annotation": "Original equation"},
   {"expression": "2x = 13 − 5", "annotation": "Subtract 5 from both sides"}
-  {"expression": "2x = 8", "annotation": "Simplify"}
-  {"expression": "x = 8 ÷ 2", "annotation": "Divide both sides by 2"}
-  {"expression": "x = 4", "annotation": "Solution"}
 
 Bad example (too verbose, not formatted):
   {"expression": "two x plus five equals thirteen", "annotation": ""}
@@ -199,6 +209,39 @@ Bad example (too verbose, not formatted):
   "title": "string",
   "is_3d": false,
   "data": [{"x": number, "y": number, "label": "string", "color": "#hex"}]
+}
+
+### surface_plot
+{
+  "visual_type": "surface_plot",
+  "title": "string",
+  "expression": "string (e.g. sin(x)*cos(y))",
+  "x_range": [min, max],
+  "y_range": [min, max]
+}
+
+### vector_field
+{
+  "visual_type": "vector_field",
+  "title": "string",
+  "expression_u": "string",
+  "expression_v": "string",
+  "range": [min, max]
+}
+
+### rotating_geometry
+{
+  "visual_type": "rotating_geometry",
+  "title": "string",
+  "geometry_type": "cube|sphere|pyramid|cylinder|torus|cone|dodecahedron|icosahedron",
+  "color": "#hex",
+  "wireframe": boolean
+}
+
+### coordinate_system
+{
+  "visual_type": "coordinate_system",
+  "title": "string"
 }
 
 """
@@ -334,6 +377,43 @@ Do NOT include annotations that reveal the answer.
   "is_3d": false,
   "data": [{"x": number, "y": number, "label": "string", "color": "#hex"}]
 }
+
+### surface_plot (for problems)
+{
+  "visual_type": "surface_plot",
+  "title": "string",
+  "is_problem": true,
+  "expression": "string",
+  "x_range": [min, max],
+  "y_range": [min, max]
+}
+
+### vector_field (for problems)
+{
+  "visual_type": "vector_field",
+  "title": "string",
+  "is_problem": true,
+  "expression_u": "string",
+  "expression_v": "string",
+  "range": [min, max]
+}
+
+### rotating_geometry (for problems)
+{
+  "visual_type": "rotating_geometry",
+  "title": "string",
+  "is_problem": true,
+  "geometry_type": "cube|sphere|pyramid|cylinder|torus|cone|dodecahedron|icosahedron",
+  "color": "#hex",
+  "wireframe": boolean
+}
+
+### coordinate_system (for problems)
+{
+  "visual_type": "coordinate_system",
+  "title": "string",
+  "is_problem": true
+}
 """
 
 from google.genai import types
@@ -370,6 +450,10 @@ TUTOR_TOOLS = [
                                 "histogram",
                                 "bell_curve",
                                 "scatter_plot",
+                                "surface_plot",
+                                "vector_field",
+                                "rotating_geometry",
+                                "coordinate_system",
                             ],
                             description="The type of visualization to generate.",
                         ),
@@ -423,6 +507,10 @@ TUTOR_TOOLS = [
                                 "histogram",
                                 "bell_curve",
                                 "scatter_plot",
+                                "surface_plot",
+                                "vector_field",
+                                "rotating_geometry",
+                                "coordinate_system",
                             ],
                             description="The type of problem visualization to generate.",
                         ),

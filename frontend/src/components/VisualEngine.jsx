@@ -14,6 +14,7 @@ import {
 
 import { RotatingGeometryVisual, CoordinateSystemVisual } from './ThreeVisuals';
 import { SurfacePlotVisual, VectorFieldVisual, ScatterPlotVisual } from './PlotlyVisuals';
+import * as math from 'mathjs';
 
 // ── Animation timing constants (ms) ───────────────────────────────
 const ANIMATION_DURATION = {
@@ -29,22 +30,18 @@ function evaluateExpression(expr, xMin, xMax, steps = 200) {
   const data = [];
   const dx = (xMax - xMin) / steps;
 
-  // Simple expression evaluator — supports basic math ops
-  const safeExpr = expr
-    .replace(/\^/g, '**')
-    .replace(/sin/g, 'Math.sin')
-    .replace(/cos/g, 'Math.cos')
-    .replace(/tan/g, 'Math.tan')
-    .replace(/sqrt/g, 'Math.sqrt')
-    .replace(/abs/g, 'Math.abs')
-    .replace(/log/g, 'Math.log')
-    .replace(/pi/gi, 'Math.PI')
-    .replace(/e(?![a-z])/g, 'Math.E');
+  let compiledExpr;
+  try {
+    compiledExpr = math.compile(expr);
+  } catch (err) {
+    console.error("Failed to compile expression:", expr, err);
+    return data;
+  }
 
   for (let i = 0; i <= steps; i++) {
     const x = xMin + i * dx;
     try {
-      const y = new Function('x', `return ${safeExpr}`)(x);
+      const y = compiledExpr.evaluate({ x });
       if (isFinite(y)) {
         data.push({ x: Math.round(x * 1000) / 1000, y: Math.round(y * 1000) / 1000 });
       }
@@ -92,9 +89,15 @@ function GraphVisual({ visual }) {
 
   // Progressive draw animation
   const [visiblePoints, setVisiblePoints] = useState(0);
+  const [hasDrawnOnce, setHasDrawnOnce] = useState(false);
   const totalPoints = mergedData.length;
 
   useEffect(() => {
+    if (hasDrawnOnce) {
+      setVisiblePoints(totalPoints);
+      return;
+    }
+
     setVisiblePoints(0);
     if (totalPoints === 0) return;
 
@@ -113,12 +116,13 @@ function GraphVisual({ visual }) {
         rafId = requestAnimationFrame(step);
       } else {
         setVisiblePoints(totalPoints);
+        setHasDrawnOnce(true);
       }
     };
 
     rafId = requestAnimationFrame(step);
     return () => cancelAnimationFrame(rafId);
-  }, [totalPoints]);
+  }, [totalPoints, hasDrawnOnce]);
 
   const animationComplete = visiblePoints >= totalPoints;
   const slicedData = mergedData.slice(0, visiblePoints);
@@ -216,8 +220,12 @@ function EquationStepsVisual({ visual }) {
   const [allRevealed, setAllRevealed] = useState(false);
 
   useEffect(() => {
-    setAllRevealed(false);
-    if (steps.length === 0) return;
+    // We only reset allRevealed if the steps list is empty or drastically changed
+    // In a progressive update, we don't want to reset it because it might cause flickering.
+    if (steps.length === 0) {
+      setAllRevealed(false);
+      return;
+    }
 
     const totalDelay = steps.length * ANIMATION_DURATION.equation_steps + 300;
     const timer = setTimeout(() => setAllRevealed(true), totalDelay);
@@ -228,11 +236,11 @@ function EquationStepsVisual({ visual }) {
     <div className="equation-steps">
       {steps.map((step, i) => (
         <motion.div
-          key={i}
+          key={`${step.expression}-${i}`}
           className="equation-step"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: i * (ANIMATION_DURATION.equation_steps / 1000), duration: 0.3 }}
+          transition={{ duration: 0.3 }}
         >
           <span className="step-number">{i + 1}</span>
           <span className="step-expression">
@@ -775,9 +783,9 @@ function GeometryVisual({ visual }) {
 
 // ── Main Visual Engine ────────────────────────────────────────────
 export default function VisualEngine({ visual, isLoading = false }) {
-  // Key that changes whenever visual data changes → forces unmount/remount
-  // of the sub-component, cleanly restarting all animations.
-  const visualKey = useMemo(() => JSON.stringify(visual), [visual]);
+  // Use a key based on visual type and title, so parameter updates (like
+  // expression tweaks) don't force a full unmount/remount.
+  const visualKey = visual ? `${visual.visual_type}-${visual.title || ''}` : 'empty';
 
   return (
     <div className="visual-engine">
@@ -825,7 +833,12 @@ export default function VisualEngine({ visual, isLoading = false }) {
             {visual.title && <h3 className="visual-title">{visual.title}</h3>}
 
             {visual.visual_type === 'graph_function' && <GraphVisual key={visualKey} visual={visual} />}
-            {visual.visual_type === 'equation_steps' && <EquationStepsVisual key={visualKey} visual={visual} />}
+            {visual.visual_type === 'equation_steps' && (
+              <EquationStepsVisual 
+                key={visual.visual_type + (visual.title || '')} 
+                visual={visual} 
+              />
+            )}
             {visual.visual_type === 'bar_chart' && <BarChartVisual key={visualKey} visual={visual} />}
             {visual.visual_type === 'pie_chart' && <PieChartVisual key={visualKey} visual={visual} />}
             {visual.visual_type === 'line_chart' && <LineChartVisual key={visualKey} visual={visual} />}

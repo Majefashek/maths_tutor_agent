@@ -60,24 +60,45 @@ export default function TranscriptPanel({ transcript }) {
   const containerRef = useRef(null);
   const bottomRef = useRef(null);
 
+  // Track if we should auto-scroll
+  const autoScrollRef = useRef(true);
+
   /**
    * Returns true when the scroll container is within ~100 px of the bottom.
    */
-  const isNearBottom = useCallback(() => {
+  const checkNearBottom = useCallback(() => {
     const el = containerRef.current;
-    if (!el) return true; // default to scrolling if ref not ready
-    return el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+    if (!el) return true;
+    const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    return distanceToBottom < 100;
   }, []);
+
+  // Update auto-scroll lock based on user scrolling
+  const handleScroll = () => {
+    const nearBottom = checkNearBottom();
+    autoScrollRef.current = nearBottom;
+  };
 
   // Auto-scroll only when the user hasn't scrolled up
   useEffect(() => {
-    if (isNearBottom()) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (autoScrollRef.current) {
+      // Determine if a message is currently streaming
+      const isStreaming = transcript.some(m => m.isStreaming);
+      
+      // Use instant scroll during streaming to avoid "twitching"
+      // Use smooth scroll for new messages (non-streaming)
+      bottomRef.current?.scrollIntoView({ 
+        behavior: isStreaming ? 'auto' : 'smooth' 
+      });
     }
-  }, [transcript, isNearBottom]);
+  }, [transcript]);
 
   return (
-    <div className="transcript-container" ref={containerRef}>
+    <div 
+      className="transcript-container" 
+      ref={containerRef}
+      onScroll={handleScroll}
+    >
       {transcript.length === 0 && (
         <div
           style={{
@@ -97,7 +118,7 @@ export default function TranscriptPanel({ transcript }) {
         ))}
       </AnimatePresence>
 
-      <div ref={bottomRef} />
+      <div ref={bottomRef} style={{ height: '1px' }} />
     </div>
   );
 }

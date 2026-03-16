@@ -27,7 +27,8 @@ class GeminiLiveClient:
     """
 
     def __init__(self, on_audio, on_text, on_tool_call, on_turn_complete,
-                 on_input_transcription=None, on_output_transcription=None):
+                 on_input_transcription=None, on_output_transcription=None,
+                 on_interrupted=None):
         """
         Args:
             on_audio:  async callback(bytes) — raw PCM audio chunk from Gemini
@@ -43,6 +44,7 @@ class GeminiLiveClient:
         self.on_turn_complete = on_turn_complete
         self.on_input_transcription = on_input_transcription
         self.on_output_transcription = on_output_transcription
+        self.on_interrupted = on_interrupted
 
         self._client = genai.Client(
             api_key=settings.GEMINI_API_KEY,
@@ -184,6 +186,8 @@ class GeminiLiveClient:
                                 logger.debug("Gemini turn_complete received")
                             if interrupted:
                                 logger.info("Gemini turn was interrupted")
+                                if self.on_interrupted:
+                                    await self.on_interrupted()
 
                             # Handle input transcription (user's speech → text)
                             if input_transcription:

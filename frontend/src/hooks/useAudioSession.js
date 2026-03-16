@@ -38,6 +38,7 @@ export function useAudioSession({ persistSession = false } = {}) {
   const micProcessorRef = useRef(null);
   const msgIdRef = useRef(0);
   const isMutedRef = useRef(false); // ← tracks mute state without stale closures
+  const isInterruptedRef = useRef(false);
 
   // Keep isMutedRef in sync with isMuted state
   useEffect(() => {
@@ -56,6 +57,7 @@ export function useAudioSession({ persistSession = false } = {}) {
         break;
 
       case 'audio':
+        if (isInterruptedRef.current) return; // Drop in-flight audio if interrupted
         setIsTutorSpeaking(true);
         // Decode base64 → Int16 PCM and send to AudioWorklet
         if (workletNodeRef.current && msg.data) {
@@ -95,6 +97,7 @@ export function useAudioSession({ persistSession = false } = {}) {
       case 'turn_complete':
         console.log('[AudioSession] Turn complete - tutor finished speaking');
         setIsTutorSpeaking(false);
+        isInterruptedRef.current = false;
         // Mark the last tutor message as no longer streaming
         setTranscript((prev) => {
           if (prev.length === 0) return prev;
@@ -119,6 +122,15 @@ export function useAudioSession({ persistSession = false } = {}) {
         const visual = msg.data || msg;
         setCurrentVisual(visual);
         setVisualHistory((prev) => [...prev, visual]);
+        break;
+
+      case 'interrupted':
+        console.log('[AudioSession] Tutor interrupted - clearing audio buffer');
+        setIsTutorSpeaking(false);
+        isInterruptedRef.current = true;
+        if (workletNodeRef.current) {
+          workletNodeRef.current.port.postMessage({ type: 'clear' });
+        }
         break;
 
       case 'error':

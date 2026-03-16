@@ -42,6 +42,7 @@ class TutorConsumer(AsyncWebsocketConsumer):
         self._viz_tasks: set[asyncio.Task] = set()
         self._tool_call_pending = False
         self._current_visual: dict | None = None
+        self._is_interrupted = False
 
     # ── Connection lifecycle ──────────────────────────────────────────
 
@@ -62,6 +63,7 @@ class TutorConsumer(AsyncWebsocketConsumer):
             task.cancel()
         self._viz_tasks.clear()
         self._current_visual = None
+        self._is_interrupted = False
 
     # ── Inbound message routing ───────────────────────────────────────
 
@@ -85,13 +87,9 @@ class TutorConsumer(AsyncWebsocketConsumer):
             elif event == "audio":
                 raw = msg.get("data", "")
                 if raw and self.gemini:
-                    if self._tool_call_pending:
-                        # Drop audio while Gemini is awaiting a tool response if it causes 1008
-                        # logger.debug("Dropping audio during tool call pending")
-                        pass
-                    else:
-                        audio_bytes = base64.b64decode(raw)
-                        await self.gemini.send_audio(audio_bytes)
+                    # Removed tool call gate: allow audio barge-in even during tool calls
+                    audio_bytes = base64.b64decode(raw)
+                    await self.gemini.send_audio(audio_bytes)
                 elif not self.gemini:
                     logger.warning("Audio received but no Gemini session active")
 
@@ -122,6 +120,7 @@ class TutorConsumer(AsyncWebsocketConsumer):
             on_turn_complete=self._handle_turn_complete,
             on_input_transcription=self._handle_input_transcription,
             on_output_transcription=self._handle_output_transcription,
+            on_interrupted=self._handle_gemini_interrupted,
         )
         try:
             await self.gemini.connect()
@@ -137,6 +136,10 @@ class TutorConsumer(AsyncWebsocketConsumer):
 
     async def _handle_gemini_audio(self, audio_bytes: bytes):
         """Forward PCM audio from Gemini to the client."""
+        if self._is_interrupted:
+            # Don't send audio to client if we've already been interrupted
+            return
+
         await self.send(
             text_data=json.dumps(
                 {
@@ -156,6 +159,7 @@ class TutorConsumer(AsyncWebsocketConsumer):
 
     async def _handle_turn_complete(self):
         """Notify client that the tutor finished speaking."""
+        self._is_interrupted = False
         await self.send(
             text_data=json.dumps({"event": "turn_complete"})
         )
@@ -174,6 +178,14 @@ class TutorConsumer(AsyncWebsocketConsumer):
             text_data=json.dumps(
                 {"event": "transcript", "data": text, "role": "tutor"}
             )
+        )
+
+    async def _handle_gemini_interrupted(self):
+        """Notify client that the tutor was interrupted."""
+        logger.info("Gemini was interrupted, notifying client")
+        self._is_interrupted = True
+        await self.send(
+            text_data=json.dumps({"event": "interrupted"})
         )
 
     async def _handle_tool_call(self, tool_call: dict):

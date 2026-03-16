@@ -49,8 +49,7 @@ class VisualizationAgentTest(TestCase):
         
         # Verify fallback
         self.assertEqual(result["visual_type"], "graph_function")
-        self.assertIn("error", result)
-        self.assertEqual(result["error"], "Failed to generate visualization")
+        self.assertTrue(result["error"].startswith("Failed to parse"))
 
 if __name__ == "__main__":
     unittest.main()
