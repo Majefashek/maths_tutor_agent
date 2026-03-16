@@ -22,6 +22,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend code
 COPY backend/ ./
 
+# Copy startup script from root
+COPY startup.sh ./
+
+
 # Copy built frontend assets to Django's static folder
 COPY --from=frontend-build /app/frontend/dist/ ./static/
 
