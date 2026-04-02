@@ -1,0 +1,326 @@
+{
+  "topic": "Quadratic Equations",
+  "student_age": 15,
+  "grade_level": "Year 10",
+  "duration_minutes": 65,
+  "learning_objectives": [
+    "Define and identify quadratic equations in standard form.",
+    "Identify the coefficients a, b, and c in a quadratic equation.",
+    "Solve quadratic equations by factoring.",
+    "Apply the quadratic formula to find the roots of a quadratic equation.",
+    "Understand real-world applications of quadratic equations."
+  ],
+  "prerequisite_knowledge": [
+    "Basic algebraic manipulation (solving linear equations, expanding brackets)",
+    "Factoring algebraic expressions (common factors, difference of squares, trinomials)",
+    "Understanding of square roots and basic arithmetic operations"
+  ],
+  "key_formulae": [
+    {
+      "name": "Standard Form of a Quadratic Equation",
+      "expression": "ax^2 + bx + c = 0",
+      "annotation": "Where 'a', 'b', and 'c' are real numbers and 'a' \u2260 0."
+    },
+    {
+      "name": "Quadratic Formula",
+      "expression": "x = (-b \u00b1 sqrt(b^2 - 4ac)) / 2a",
+      "annotation": "Used to find the values of 'x' (roots) that satisfy the quadratic equation."
+    }
+  ],
+  "phases": [
+    {
+      "phase_number": 1,
+      "phase_name": "Hook & Warm-up: What's a Quadratic?",
+      "duration_minutes": 5,
+      "objective": "Engage the student and introduce the concept of non-linear relationships leading to quadratics.",
+      "teaching_steps": [
+        {
+          "step": 1,
+          "action": "TEACH",
+          "tutor_says": "Hi! Today we're going to explore Quadratic Equations. Have you ever seen a graph that isn't a straight line, like the path of a thrown ball?",
+          "visual_tool": "generate_math_visual",
+          "visual_type": "graph_function",
+          "visual_concept": "parabola",
+          "visual_parameters_hint": "Plot y = x^2, showing a parabolic shape."
+        },
+        {
+          "step": 2,
+          "action": "TEACH",
+          "tutor_says": "That curved path is often described by a quadratic equation. Unlike linear equations which have 'x' to the power of 1, quadratic equations have 'x' to the power of 2 as their highest power. Let's dive in!",
+          "visual_tool": "none",
+          "visual_type": "none",
+          "visual_concept": "none",
+          "visual_parameters_hint": "none"
+        }
+      ]
+    },
+    {
+      "phase_number": 2,
+      "phase_name": "Understanding Standard Form",
+      "duration_minutes": 10,
+      "objective": "Define quadratic equations, identify standard form, and extract coefficients a, b, c.",
+      "teaching_steps": [
+        {
+          "step": 1,
+          "action": "TEACH",
+          "tutor_says": "A quadratic equation is any equation that can be written in the standard form: ax^2 + bx + c = 0. Here, 'a', 'b', and 'c' are coefficients, and 'a' cannot be zero. The 'x^2' term is what makes it quadratic.",
+          "visual_tool": "generate_math_visual",
+          "visual_type": "equation_steps",
+          "visual_concept": "Standard Form of a Quadratic Equation",
+          "visual_parameters_hint": "Display: ax^2 + bx + c = 0, with a, b, c highlighted as coefficients."
+        },
+        {
+          "step": 2,
+          "action": "SHOW",
+          "tutor_says": "Let's look at an example: 2x^2 + 5x - 3 = 0. Can you identify the values of a, b, and c here?",
+          "visual_tool": "generate_math_visual",
+          "visual_type": "equation_steps",
+          "visual_concept": "Identifying coefficients",
+          "visual_parameters_hint": "Display: 2x^2 + 5x - 3 = 0. Point to a=2, b=5, c=-3."
+        },
+        {
+          "step": 3,
+          "action": "PROBLEM",
+          "tutor_says": "What about x^2 - 4 = 0? What are a, b, and c in this equation?",
+          "visual_tool": "generate_problem_visual",
+          "visual_type": "equation_steps",
+          "visual_concept": "Identifying coefficients with missing terms",
+          "visual_parameters_hint": "Display: x^2 - 4 = 0. Ask for a, b, c."
+        },
+        {
+          "step": 4,
+          "action": "CHECK",
+          "tutor_says": "Excellent! For x^2 - 4 = 0, a=1, b=0, and c=-4. Remember, if a term isn't there, its coefficient is 0.",
+          "visual_tool": "none",
+          "visual_type": "none",
+          "visual_concept": "none",
+          "visual_parameters_hint": "none"
+        }
+      ]
+    },
+    {
+      "phase_number": 3,
+      "phase_name": "Solving by Factoring",
+      "duration_minutes": 15,
+      "objective": "Review factoring techniques and apply them to solve quadratic equations.",
+      "teaching_steps": [
+        {
+          "step": 1,
+          "action": "TEACH",
+          "tutor_says": "One common way to solve quadratic equations is by factoring. This method relies on the Zero Product Property: if a * b = 0, then either a = 0 or b = 0 (or both).",
+          "visual_tool": "none",
+          "visual_type": "none",
+          "visual_concept": "none",
+          "visual_parameters_hint": "none"
+        },
+        {
+          "step": 2,
+          "action": "SHOW",
+          "tutor_says": "Let's solve x^2 + 5x + 6 = 0. First, we factor the quadratic expression. Can you recall how to factor this trinomial?",
+          "visual_tool": "generate_math_visual",
+          "visual_type": "equation_steps",
+          "visual_concept": "Factoring a trinomial",
+          "visual_parameters_hint": "Display: x^2 + 5x + 6 = 0. Show factoring to (x+2)(x+3) = 0."
+        },
+        {
+          "step": 3,
+          "action": "TEACH",
+          "tutor_says": "Now that we have (x+2)(x+3) = 0, we use the Zero Product Property. This means either (x+2) = 0 or (x+3) = 0. Solving these two linear equations gives us our solutions for x.",
+          "visual_tool": "generate_math_visual",
+          "visual_type": "equation_steps",
+          "visual_concept": "Applying Zero Product Property",
+          "visual_parameters_hint": "Display: (x+2)=0 => x=-2; (x+3)=0 => x=-3."
+        },
+        {
+          "step": 4,
+          "action": "PROBLEM",
+          "tutor_says": "Your turn! Solve the equation x^2 - 7x + 10 = 0 by factoring.",
+          "visual_tool": "generate_problem_visual",
+          "visual_type": "equation_steps",
+          "visual_concept": "Solve by factoring practice",
+          "visual_parameters_hint": "Display: x^2 - 7x + 10 = 0. Expect (x-2)(x-5)=0."
+        },
+        {
+          "step": 5,
+          "action": "CHECK",
+          "tutor_says": "Great job! The solutions are x=2 and x=5. Remember to always set the equation to zero first before factoring.",
+          "visual_tool": "none",
+          "visual_type": "none",
+          "visual_concept": "none",
+          "visual_parameters_hint": "none"
+        }
+      ]
+    },
+    {
+      "phase_number": 4,
+      "phase_name": "The Quadratic Formula",
+      "duration_minutes": 15,
+      "objective": "Introduce the quadratic formula and demonstrate its application to solve equations, especially those not easily factorable.",
+      "teaching_steps": [
+        {
+          "step": 1,
+          "action": "TEACH",
+          "tutor_says": "Not all quadratic equations can be easily factored. For those, we have a powerful tool called the Quadratic Formula. It works for ANY quadratic equation in standard form.",
+          "visual_tool": "none",
+          "visual_type": "none",
+          "visual_concept": "none",
+          "visual_parameters_hint": "none"
+        },
+        {
+          "step": 2,
+          "action": "TEACH",
+          "tutor_says": "The formula is: x = (-b \u00b1 sqrt(b^2 - 4ac)) / 2a. It looks complex, but it's just about plugging in the values of a, b, and c.",
+          "visual_tool": "generate_math_visual",
+          "visual_type": "equation_steps",
+          "visual_concept": "Quadratic Formula",
+          "visual_parameters_hint": "Display: x = (-b \u00b1 sqrt(b^2 - 4ac)) / 2a, highlighting a, b, c."
+        },
+        {
+          "step": 3,
+          "action": "SHOW",
+          "tutor_says": "Let's solve 2x^2 + 5x - 3 = 0 using the formula. First, identify a=2, b=5, c=-3. Now, substitute these into the formula carefully.",
+          "visual_tool": "generate_math_visual",
+          "visual_type": "equation_steps",
+          "visual_concept": "Applying Quadratic Formula example",
+          "visual_parameters_hint": "Display step-by-step substitution and simplification for 2x^2 + 5x - 3 = 0, leading to x = 1/2 and x = -3."
+        },
+        {
+          "step": 4,
+          "action": "PROBLEM",
+          "tutor_says": "Now, try this one: x^2 + 4x + 1 = 0. Use the quadratic formula to find the solutions. Remember to simplify any square roots if possible.",
+          "visual_tool": "generate_problem_visual",
+          "visual_type": "equation_steps",
+          "visual_concept": "Quadratic Formula practice",
+          "visual_parameters_hint": "Display: x^2 + 4x + 1 = 0. Expect solutions involving sqrt(12) or 2sqrt(3)."
+        },
+        {
+          "step": 5,
+          "action": "CHECK",
+          "tutor_says": "Excellent! The solutions are x = (-4 \u00b1 sqrt(12))/2, which simplifies to x = -2 \u00b1 sqrt(3). Good job handling the square root!",
+          "visual_tool": "none",
+          "visual_type": "none",
+          "visual_concept": "none",
+          "visual_parameters_hint": "none"
+        }
+      ]
+    },
+    {
+      "phase_number": 5,
+      "phase_name": "Practice & Method Selection",
+      "duration_minutes": 10,
+      "objective": "Provide mixed practice problems, encouraging the student to choose the most efficient solving method.",
+      "teaching_steps": [
+        {
+          "step": 1,
+          "action": "PROBLEM",
+          "tutor_says": "Let's try a few more. For each, decide if factoring or the quadratic formula is easier. First: 3x^2 - 10x + 8 = 0.",
+          "visual_tool": "generate_problem_visual",
+          "visual_type": "equation_steps",
+          "visual_concept": "Mixed practice problem 1",
+          "visual_parameters_hint": "Display: 3x^2 - 10x + 8 = 0. Solutions: x=2, x=4/3."
+        },
+        {
+          "step": 2,
+          "action": "PROBLEM",
+          "tutor_says": "Next: x^2 - 6x - 2 = 0.",
+          "visual_tool": "generate_problem_visual",
+          "visual_type": "equation_steps",
+          "visual_concept": "Mixed practice problem 2",
+          "visual_parameters_hint": "Display: x^2 - 6x - 2 = 0. Solutions: x = 3 \u00b1 sqrt(11)."
+        },
+        {
+          "step": 3,
+          "action": "CHECK",
+          "tutor_says": "You're doing great! For the first one, factoring was possible, giving x=2 and x=4/3. For the second, the quadratic formula was necessary, yielding x = 3 \u00b1 sqrt(11).",
+          "visual_tool": "none",
+          "visual_type": "none",
+          "visual_concept": "none",
+          "visual_parameters_hint": "none"
+        }
+      ]
+    },
+    {
+      "phase_number": 6,
+      "phase_name": "Real-World Application",
+      "duration_minutes": 5,
+      "objective": "Illustrate how quadratic equations are used to model real-world situations.",
+      "teaching_steps": [
+        {
+          "step": 1,
+          "action": "TEACH",
+          "tutor_says": "Quadratic equations are everywhere! They describe projectile motion, areas of shapes, and even optimizing profits. Imagine a ball thrown upwards. Its height 'h' (in meters) after 't' seconds can be modeled by h(t) = -5t^2 + 20t + 1.",
+          "visual_tool": "generate_math_visual",
+          "visual_type": "graph_function",
+          "visual_concept": "Projectile motion",
+          "visual_parameters_hint": "Plot h(t) = -5t^2 + 20t + 1, showing the parabolic path of a ball."
+        },
+        {
+          "step": 2,
+          "action": "PROBLEM",
+          "tutor_says": "Using that equation, h(t) = -5t^2 + 20t + 1, when does the ball hit the ground? (Hint: What is 'h' when it hits the ground?)",
+          "visual_tool": "generate_problem_visual",
+          "visual_type": "equation_steps",
+          "visual_concept": "Real-world problem setup",
+          "visual_parameters_hint": "Display: -5t^2 + 20t + 1 = 0. Guide student to use quadratic formula."
+        },
+        {
+          "step": 3,
+          "action": "CHECK",
+          "tutor_says": "Exactly! Setting h(t)=0 and using the quadratic formula gives us t \u2248 4.05 seconds (we discard the negative time). This shows how quadratics help us predict real-world outcomes.",
+          "visual_tool": "none",
+          "visual_type": "none",
+          "visual_concept": "none",
+          "visual_parameters_hint": "none"
+        }
+      ]
+    },
+    {
+      "phase_number": 7,
+      "phase_name": "Assessment & Wrap-Up",
+      "duration_minutes": 5,
+      "objective": "Assess understanding of key concepts and summarize the lesson.",
+      "teaching_steps": [
+        {
+          "step": 1,
+          "action": "CHECK",
+          "tutor_says": "Quick check: What is the standard form of a quadratic equation, and what are the two main methods we discussed for solving them?",
+          "visual_tool": "none",
+          "visual_type": "none",
+          "visual_concept": "none",
+          "visual_parameters_hint": "none"
+        },
+        {
+          "step": 2,
+          "action": "CHECK",
+          "tutor_says": "When might you choose the quadratic formula over factoring?",
+          "visual_tool": "none",
+          "visual_type": "none",
+          "visual_concept": "none",
+          "visual_parameters_hint": "none"
+        },
+        {
+          "step": 3,
+          "action": "TEACH",
+          "tutor_says": "Fantastic! You've learned how to identify, factor, and use the quadratic formula to solve these important equations. Keep practicing, and you'll master them!",
+          "visual_tool": "none",
+          "visual_type": "none",
+          "visual_concept": "none",
+          "visual_parameters_hint": "none"
+        }
+      ]
+    }
+  ],
+  "common_mistakes": [
+    "Incorrectly identifying coefficients a, b, or c, especially signs.",
+    "Errors in factoring trinomials, leading to incorrect roots.",
+    "Sign errors when substituting values into the quadratic formula.",
+    "Forgetting the '\u00b1' in the quadratic formula, leading to only one solution.",
+    "Not setting the quadratic equation to zero before attempting to factor or apply the formula.",
+    "Arithmetic errors when simplifying the quadratic formula (especially under the square root or in the denominator)."
+  ],
+  "extension_challenges": [
+    "Explore the discriminant (b^2 - 4ac) and how its value determines the nature and number of solutions (real/complex, distinct/repeated).",
+    "Solve quadratic equations by 'completing the square'.",
+    "Graph quadratic functions (parabolas) and relate the x-intercepts to the solutions of the quadratic equation."
+  ]
+}
